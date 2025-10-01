@@ -1,0 +1,34 @@
+Contributor License Agreement (CLA)
+
+Thank you for your interest in contributing to this project!
+This Contributor License Agreement (“Agreement”) clarifies how contributions may be used.
+
+By submitting a contribution (code, documentation, or any other content), you agree to the following terms:
+
+1. Ownership and License
+
+You keep full copyright to your contributions.
+
+You grant the project maintainer (the “Maintainer”) a perpetual, worldwide, non-exclusive, royalty-free license to use, modify, distribute, and sublicense your contribution as part of this project.
+
+2. Relicensing Permission
+
+You allow the Maintainer to relicense your contribution under any open-source license approved by the Open Source Initiative (OSI).
+
+3. Your Warranties
+
+You confirm that:
+
+Your contribution is your own original work, or you have the right to submit it.
+
+You are not knowingly violating anyone else’s rights.
+
+You grant this license without any additional terms or conditions.
+
+4. No Warranty
+
+Your contribution is provided “as is”, without warranties or conditions of any kind.
+
+5. How to Agree
+
+By submitting a pull request, patch, or contribution to this project, you are agreeing to the terms of this Agreement.
