@@ -4,6 +4,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "program.h"
+
 using WindowHint = struct WindowHint {
   int key;
   int value;
@@ -21,6 +23,13 @@ using GraphicContextConfig = struct GraphicContextConfig {
   const char *window_title;
   int window_width;
   int window_height;
+};
+
+using WindowState = struct WindowState {
+  int width;
+  int height;
+  ProgramManager *program_manager;
+  ProgramHandle shader_program_handle;
 };
 
 using GraphicContext = struct GraphicContext {

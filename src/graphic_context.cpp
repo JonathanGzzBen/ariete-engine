@@ -1,9 +1,26 @@
 #include "ariete-engine/graphic_context.h"
 
+#include <glm/ext/matrix_clip_space.hpp>
 #include <iostream>
 #include <print>
 
 static GraphicContext g_graphic_context = {.valid = false};
+
+void window_size_callback(GLFWwindow *window, const int width,
+                          const int height) {
+  const auto window_state =
+      static_cast<WindowState *>(glfwGetWindowUserPointer(window));
+  window_state->width = width;
+  window_state->height = height;
+  glfwSetWindowSize(window, width, height);
+  glViewport(0, 0, width, height);
+
+  const auto projection_view_matrix =
+      glm::ortho(0.0F, 1280.0F, 0.0F, static_cast<float>(height));
+  program_set_uniform(*window_state->program_manager,
+                      window_state->shader_program_handle,
+                      "projection_view_matrix", projection_view_matrix);
+}
 
 // This function should only be called once per program
 auto graphic_context_create(const GraphicContextConfig &config)
@@ -61,6 +78,8 @@ auto graphic_context_create(const GraphicContextConfig &config)
                             nullptr, GL_TRUE);
     }
   }
+
+  glfwSetWindowSizeCallback(window, window_size_callback);
 
   const auto context = GraphicContext{.valid = true,
                                       .window = window,

@@ -8,14 +8,14 @@
 #include "ariete-engine/font.h"
 
 inline auto text_create_mesh(const FontGlyphData &glyph_data,
-                             MeshManager *manager, const glm::vec2 position,
-                             const std::string &text, const float size,
-                             const float pixel_scale) -> MeshHandle {
+                             MeshManager *manager, const std::string &text,
+                             const float size, const float scale)
+    -> MeshHandle {
   if (!glyph_data.valid) {
     std::println(stderr, "Font data not valid");
     return -1;
   }
-  glm::vec2 cursor_position = position;
+  auto cursor_position = glm::vec2(0.0F, 0.0F);
   const unsigned int num_vertices = text.length() * 4;
   auto *vertices = new Vertex[num_vertices];
   size_t vertices_index = 0;
@@ -30,18 +30,16 @@ inline auto text_create_mesh(const FontGlyphData &glyph_data,
     const auto packed_char = glyph_data.packed_chars[index];
     const auto aligned_quad = glyph_data.aligned_quads[index];
 
-    const auto glyph_size =
-        glm::vec2(static_cast<float>(packed_char.x1 - packed_char.x0) *
-                      pixel_scale * size,
-                  static_cast<float>(packed_char.y1 - packed_char.y0) *
-                      pixel_scale * size);
+    const auto glyph_size = glm::vec2(
+        static_cast<float>(packed_char.x1 - packed_char.x0) * scale * size,
+        static_cast<float>(packed_char.y1 - packed_char.y0) * scale * size);
 
     const auto bounding_box_top_left_position =
-        glm::vec2(cursor_position.x + (packed_char.xoff * pixel_scale * size),
+        glm::vec2(cursor_position.x + (packed_char.xoff * scale * size),
                   cursor_position.y -
                       ((packed_char.yoff + static_cast<float>(packed_char.y1) -
                         static_cast<float>(packed_char.y0)) *
-                       pixel_scale * size));
+                       scale * size));
 
     // Top-right, top-left, bottom-left, bottom-right
     const Vertex character_vertices[4] = {
@@ -73,7 +71,7 @@ inline auto text_create_mesh(const FontGlyphData &glyph_data,
     indices[indices_index++] = base + 0;
     indices[indices_index++] = base + 2;
     indices[indices_index++] = base + 3;
-    cursor_position.x += packed_char.xadvance * pixel_scale * size;
+    cursor_position.x += packed_char.xadvance * scale * size;
   }
 
   const auto mesh_data = MeshData{

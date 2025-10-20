@@ -94,6 +94,53 @@ auto main() -> int {
     std::println(std::cerr, "Could not create Mesh manager");
     return 1;
   }
+  const auto program_handle = [&program_manager]() {
+    const auto vertex_shader_source =
+        std::unique_ptr<const char[]>(read_file("shaders/vertex.glsl"));
+    const auto fragment_shader_source =
+        std::unique_ptr<const char[]>(read_file("shaders/fragment.glsl"));
+
+    if (vertex_shader_source == nullptr || fragment_shader_source == nullptr) {
+      return -1;
+    }
+    return program_create(*program_manager, vertex_shader_source.get(),
+                          fragment_shader_source.get());
+  }();
+  if (program_handle < 0) {
+    std::println(std::cerr, "Could not create Program");
+    return 1;
+  }
+
+  auto window_state = WindowState{.width = graphic_context->window_width,
+                                  .height = graphic_context->window_height,
+                                  .program_manager = program_manager.get(),
+                                  .shader_program_handle = program_handle};
+
+  glfwSetWindowUserPointer(graphic_context->window, &window_state);
+
+  const auto vao_manager = get_smart_manager<VertexArrayObjectManager>(
+      vertex_array_object_manager_create, 1,
+      vertex_array_object_manager_destroy_all);
+
+  const std::vector attributes = {
+      VertexArrayAttributeEntry{.index = 0,
+                                .size = 3,
+                                .type = GL_FLOAT,
+                                .normalized = GL_FALSE,
+                                .relative_offset = 0,
+                                .binding_index = 0},
+      VertexArrayAttributeEntry{.index = 1,
+                                .size = 2,
+                                .type = GL_FLOAT,
+                                .normalized = GL_FALSE,
+                                .relative_offset = offsetof(Vertex, uv),
+                                .binding_index = 0}};
+  const auto vao_handle = vertex_array_object_create(
+      vao_manager.get(), attributes.data(), attributes.size());
+  if (vao_handle < 0) {
+    std::println(std::cerr, "Could not create VAO");
+    return 1;
+  }
 
   static constexpr int font_atlas_width = 1024;
   static constexpr int font_atlas_height = 1024;
@@ -121,64 +168,23 @@ auto main() -> int {
     return 1;
   }
 
-  const auto program_handle = [&program_manager]() {
-    const auto vertex_shader_source =
-        std::unique_ptr<const char[]>(read_file("shaders/vertex.glsl"));
-    const auto fragment_shader_source =
-        std::unique_ptr<const char[]>(read_file("shaders/fragment.glsl"));
-
-    if (vertex_shader_source == nullptr || fragment_shader_source == nullptr) {
-      return -1;
-    }
-    return program_create(*program_manager, vertex_shader_source.get(),
-                          fragment_shader_source.get());
-  }();
-  if (program_handle < 0) {
-    std::println(std::cerr, "Could not create Program");
-    return 1;
-  }
-
-  const auto vao_manager = get_smart_manager<VertexArrayObjectManager>(
-      vertex_array_object_manager_create, 1,
-      vertex_array_object_manager_destroy_all);
-
-  const std::vector attributes = {
-      VertexArrayAttributeEntry{.index = 0,
-                                .size = 3,
-                                .type = GL_FLOAT,
-                                .normalized = GL_FALSE,
-                                .relative_offset = 0,
-                                .binding_index = 0},
-      VertexArrayAttributeEntry{.index = 1,
-                                .size = 2,
-                                .type = GL_FLOAT,
-                                .normalized = GL_FALSE,
-                                .relative_offset = offsetof(Vertex, uv),
-                                .binding_index = 0}};
-  const auto vao_handle = vertex_array_object_create(
-      vao_manager.get(), attributes.data(), attributes.size());
-  if (vao_handle < 0) {
-    std::println(std::cerr, "Could not create VAO");
-    return 1;
-  }
-
   const auto mesh_manager = get_smart_manager<MeshManager>(
-      mesh_manager_create, 3, mesh_manager_destroy_all);
+      mesh_manager_create, 1, mesh_manager_destroy_all);
   if (!mesh_manager->valid) {
     std::println(std::cerr, "Could not create Mesh manager");
     return 1;
   }
 
-  static constexpr float pixel_scale = 1.0F;
+  static constexpr float scale = 1.0F;
   const auto glyph_data = font_get_glyph_data(*font_manager, font_handle);
   if (!glyph_data.valid) {
     std::println(std::cerr, "Font data not valid");
     return 1;
   }
   const auto text_mesh_handle = text_create_mesh(
-      glyph_data, mesh_manager.get(), glm::vec2(0.0F, window_height / 2.0F),
+      glyph_data, mesh_manager.get(),
       "Hello this is a longer test text for testing the text rendering.", 0.5F,
-      pixel_scale);
+      scale);
   if (text_mesh_handle < 0) {
     std::println(stderr, "Could not create text_mesh");
     return 1;
@@ -208,10 +214,16 @@ auto main() -> int {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     program_use(*program_manager, program_handle);
+
+    auto model_matrix = glm::mat4(1.0F);
+    model_matrix = glm::translate(
+        model_matrix,
+        glm::vec3(0.0F, static_cast<float>(window_state.height) / 2.0F, 0.0F));
+    program_set_uniform(*program_manager, program_handle, "model_matrix",
+                        model_matrix);
     vertex_array_object_bind(*vao_manager, vao_handle);
     mesh_draw(*mesh_manager, text_mesh_handle);
 
-    // Render
     glfwSwapBuffers(graphic_context->window);
     glfwPollEvents();
   }
