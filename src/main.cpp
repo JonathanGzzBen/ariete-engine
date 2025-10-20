@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <functional>
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <print>
 
@@ -59,6 +60,8 @@ auto get_smart_manager(Constructor constructor, int &&max_num,
 // }
 
 auto main() -> int {
+  static constexpr auto window_width = 1280;
+  static constexpr auto window_height = 720;
   static constexpr GraphicContextConfig config{
       .glfw_error_callback = glfw_error_callback,
       .glfw_window_hints =
@@ -73,8 +76,8 @@ auto main() -> int {
       .gl_debug_callback = gl_debug_callback,
       .gl_enable_debug = true,
       .window_title = "Jonark",
-      .window_width = 1280,
-      .window_height = 720,
+      .window_width = window_width,
+      .window_height = window_height,
   };
   const auto graphic_context =
       std::unique_ptr<GraphicContext, decltype(&graphic_context_destroy)>(
@@ -166,39 +169,34 @@ auto main() -> int {
     return 1;
   }
 
-  // Top-right, top-left, bottom-left, bottom-right
-  /*
-  static constexpr Vertex vertices[] = {
-      {.position = glm::vec3(0.5F, 0.5F, 0.0F), .uv = glm::vec2(1.0F, 0.0F)},
-      {.position = glm::vec3(-0.5F, 0.5F, 0.0F), .uv = glm::vec2(0.0F, 0.0F)},
-      {.position = glm::vec3(-0.5F, -0.5F, 0.0F), .uv = glm::vec2(0.0F, 1.0F)},
-      {.position = glm::vec3(0.5F, -0.5F, 0.0F), .uv = glm::vec2(1.0F, 1.0F)}};
-  static constexpr unsigned int indices[] = {0, 1, 2, 0, 2, 3};
-  constexpr MeshData font_atlas_mesh_data = {
-      .valid = true,
-      .vertices = vertices,
-      .num_vertices = sizeof(vertices) / sizeof(Vertex),
-      .indices = indices,
-      .num_indices = sizeof(indices) / sizeof(unsigned int),
-  };
-  const auto font_atlas_mesh_handle = mesh_create(*mesh_manager,
-  font_atlas_mesh_data);
-  */
-
-  static constexpr float pixel_scale = 2.0F / 720.0F;
+  static constexpr float pixel_scale = 1.0F;
   const auto glyph_data = font_get_glyph_data(*font_manager, font_handle);
   if (!glyph_data.valid) {
     std::println(std::cerr, "Font data not valid");
     return 1;
   }
   const auto text_mesh_handle = text_create_mesh(
-      glyph_data, mesh_manager.get(), glm::vec2(-1.0F, 0.0F),
+      glyph_data, mesh_manager.get(), glm::vec2(0.0F, window_height / 2.0F),
       "Hello this is a longer test text for testing the text rendering.", 0.5F,
       pixel_scale);
   if (text_mesh_handle < 0) {
     std::println(stderr, "Could not create text_mesh");
     return 1;
   }
+
+  // Set up permanent uniforms
+  program_use(*program_manager, program_handle);
+  const auto projection_view_matrix =
+      glm::ortho(0.0F, 1280.0F, 0.0F, static_cast<float>(window_height));
+  program_set_uniform(*program_manager, program_handle,
+                      "projection_view_matrix", projection_view_matrix);
+  static constexpr int font_atlas_texture_unit = 0;
+  static constexpr auto font_atlas_texture_uniform_name = "font_atlas";
+  program_set_uniform(*program_manager, program_handle,
+                      font_atlas_texture_uniform_name, font_atlas_texture_unit);
+  texture_bind(*texture_manager, font_atlas_texture_handle,
+               font_atlas_texture_unit);
+  glUseProgram(0);
 
   glEnable(GL_DEPTH_TEST);
   /* Enable alpha blend for font */
@@ -210,21 +208,6 @@ auto main() -> int {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     program_use(*program_manager, program_handle);
-
-    // Draw font atlas
-    // const auto *const mesh = mesh_get(*mesh_manager, mesh_handle);
-    // glBindVertexArray(vao->vao_id);
-    // glBindVertexBuffer(0, mesh->vbo, 0, sizeof(Vertex));
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
-
-    static constexpr int font_atlas_texture_unit = 0;
-    static constexpr auto font_atlas_texture_uniform_name = "font_atlas";
-    texture_bind(*texture_manager, font_atlas_texture_handle,
-                 font_atlas_texture_unit);
-    program_set_uniform(*program_manager, program_handle,
-                        font_atlas_texture_uniform_name,
-                        font_atlas_texture_unit);
-
     vertex_array_object_bind(*vao_manager, vao_handle);
     mesh_draw(*mesh_manager, text_mesh_handle);
 

@@ -9,7 +9,6 @@ uniform mat4 projection_view_matrix;
 out vec2 texPos;
 
 void main() {
-    //    gl_Position = projection_view_matrix * vec4(aPos, 1.0);
-    gl_Position = vec4(aPos, 1.0);
+    gl_Position = projection_view_matrix * vec4(aPos, 1.0);
     texPos = aTexCoords;
 }

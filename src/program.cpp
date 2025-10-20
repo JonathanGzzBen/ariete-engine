@@ -2,6 +2,7 @@
 
 #include <gl/glew.h>
 
+#include <glm/mat4x4.hpp>
 #include <print>
 
 auto program_manager_create(const int max_num_programs) -> ProgramManager {
@@ -141,15 +142,35 @@ auto program_use(const ProgramManager &manager, const ProgramHandle handle)
 }
 
 template <>
-auto program_set_uniform<int>(const ProgramManager &program_manager,
-                              const ProgramHandle handle,
-                              const char *uniform_name, const int value)
-    -> void {
+auto program_set_uniform(const ProgramManager &program_manager,
+                         const ProgramHandle handle, const char *uniform_name,
+                         const int &value) -> void {
   if (!program_validate_handle(program_manager, handle)) {
-    std::println(stderr, "Invalid program");
+    std::println(stderr, "Invalid program handle");
     return;
   }
-  glUniform1i(
-      glGetUniformLocation(program_manager.program_ids[handle], uniform_name),
-      value);
+  const auto location =
+      glGetUniformLocation(program_manager.program_ids[handle], uniform_name);
+  if (location < 0) {
+    std::println(stderr, "Could not get uniform location {}", uniform_name);
+    return;
+  }
+  glUniform1i(location, value);
+}
+
+template <>
+auto program_set_uniform(const ProgramManager &program_manager,
+                         const ProgramHandle handle, const char *uniform_name,
+                         const glm::mat4 &value) -> void {
+  if (!program_validate_handle(program_manager, handle)) {
+    std::println(stderr, "Invalid program handle");
+    return;
+  }
+  const auto location =
+      glGetUniformLocation(program_manager.program_ids[handle], uniform_name);
+  if (location < 0) {
+    std::println(stderr, "Could not get uniform location {}", uniform_name);
+    return;
+  }
+  glUniformMatrix4fv(location, 1, GL_FALSE, &value[0][0]);
 }
