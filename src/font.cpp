@@ -57,17 +57,17 @@ auto font_validate_handle(const FontManager &manager, const FontHandle handle)
   return true;
 }
 
-auto font_get_data(const FontManager &manager, const FontHandle handle)
-    -> FontData {
+auto font_get_glyph_data(const FontManager &manager, const FontHandle handle)
+    -> FontGlyphData {
   if (!font_validate_handle(manager, handle)) {
     std::println(stderr, "Invalid font handle");
-    return FontData{.valid = false};
+    return FontGlyphData{.valid = false};
   }
-  return FontData{.valid = true,
-                  .packed_chars = manager.packed_chars_s[handle],
-                  .aligned_quads = manager.aligned_quads_s[handle],
-                  .charcode_begin = manager.charcode_begins[handle],
-                  .charcode_count = manager.charcode_counts[handle]};
+  return FontGlyphData{.valid = true,
+                       .packed_chars = manager.packed_chars_s[handle],
+                       .aligned_quads = manager.aligned_quads_s[handle],
+                       .charcode_begin = manager.charcode_begins[handle],
+                       .charcode_count = manager.charcode_counts[handle]};
 }
 
 auto font_create(FontManager *const manager,

@@ -7,7 +7,7 @@
 
 using FontHandle = int;
 
-struct FontData {
+struct FontGlyphData {
   const bool valid;
   const stbtt_packedchar* const packed_chars;
   const stbtt_aligned_quad* const aligned_quads;
@@ -34,7 +34,8 @@ auto font_manager_destroy_all(FontManager* manager) -> void;
 auto font_validate_handle(const FontManager& manager, FontHandle handle)
     -> bool;
 
-auto font_get_data(const FontManager& manager, FontHandle handle) -> FontData;
+auto font_get_glyph_data(const FontManager& manager, FontHandle handle)
+    -> FontGlyphData;
 
 auto font_create(FontManager* manager, const unsigned char* font_binary_data,
                  int charcode_begin, int charcode_count, float font_size,

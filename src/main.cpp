@@ -73,8 +73,8 @@ auto main() -> int {
       .gl_debug_callback = gl_debug_callback,
       .gl_enable_debug = true,
       .window_title = "Jonark",
-      .window_width = 600,
-      .window_height = 600,
+      .window_width = 1280,
+      .window_height = 720,
   };
   const auto graphic_context =
       std::unique_ptr<GraphicContext, decltype(&graphic_context_destroy)>(
@@ -185,24 +185,18 @@ auto main() -> int {
   font_atlas_mesh_data);
   */
 
-  static constexpr float pixel_scale = 2.0F / 600.0F;
-  const auto font_data = font_get_data(*font_manager, font_handle);
-  if (!font_data.valid) {
+  static constexpr float pixel_scale = 2.0F / 720.0F;
+  const auto glyph_data = font_get_glyph_data(*font_manager, font_handle);
+  if (!glyph_data.valid) {
     std::println(std::cerr, "Font data not valid");
     return 1;
   }
-  const auto text_mesh_handle =
-      text_create_mesh(font_data, mesh_manager.get(), glm::vec2(0.0F, 0.0F),
-                       "Hola", 1.0F, pixel_scale);
+  const auto text_mesh_handle = text_create_mesh(
+      glyph_data, mesh_manager.get(), glm::vec2(-1.0F, 0.0F),
+      "Hello this is a longer test text for testing the text rendering.", 0.5F,
+      pixel_scale);
   if (text_mesh_handle < 0) {
     std::println(stderr, "Could not create text_mesh");
-    return 1;
-  }
-  const auto second_text_mesh_handle =
-      text_create_mesh(font_data, mesh_manager.get(), glm::vec2(0.0F, 0.5F),
-                       "XDDDD", 1.0F, pixel_scale);
-  if (second_text_mesh_handle < 0) {
-    std::println(stderr, "Could not create second_text_mesh");
     return 1;
   }
 
@@ -233,7 +227,6 @@ auto main() -> int {
 
     vertex_array_object_bind(*vao_manager, vao_handle);
     mesh_draw(*mesh_manager, text_mesh_handle);
-    mesh_draw(*mesh_manager, second_text_mesh_handle);
 
     // Render
     glfwSwapBuffers(graphic_context->window);
