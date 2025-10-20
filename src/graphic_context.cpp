@@ -4,14 +4,12 @@
 #include <iostream>
 #include <print>
 
-static GraphicContext g_graphic_context = {.valid = false};
+static GraphicContext *g_graphic_context = nullptr;
 
 void window_size_callback(GLFWwindow *window, const int new_width,
                           const int new_height) {
   const auto window_state =
-      static_cast<WindowState *>(glfwGetWindowUserPointer(window));
-  window_state->width = new_width;
-  window_state->height = new_height;
+      static_cast<GraphicContext *>(glfwGetWindowUserPointer(window));
 
   const float target_aspect_ratio =
       window_state->virtual_width / window_state->virtual_height;
@@ -34,9 +32,9 @@ void window_size_callback(GLFWwindow *window, const int new_width,
 // This function should only be called once per program
 auto graphic_context_create(const GraphicContextConfig &config)
     -> GraphicContext {
-  if (g_graphic_context.valid) {
+  if (g_graphic_context != nullptr && g_graphic_context->valid) {
     std::println(std::cerr, "Graphic context already exists");
-    return g_graphic_context;
+    return *g_graphic_context;
   }
   if (MAX_WINDOW_HINTS < config.glfw_window_hints_count) {
     std::println(std::cerr,
@@ -58,9 +56,9 @@ auto graphic_context_create(const GraphicContextConfig &config)
                    config.glfw_window_hints[i].value);
   }
 
-  GLFWwindow *window =
-      glfwCreateWindow(config.window_width, config.window_height,
-                       config.window_title, nullptr, nullptr);
+  GLFWwindow *window = glfwCreateWindow(config.initial_window_width,
+                                        config.initial_window_height,
+                                        config.window_title, nullptr, nullptr);
   if (window == nullptr) {
     std::println(std::cerr, "Could not create GLFW window");
     glfwTerminate();
@@ -90,12 +88,14 @@ auto graphic_context_create(const GraphicContextConfig &config)
 
   glfwSetWindowSizeCallback(window, window_size_callback);
 
-  const auto context = GraphicContext{.valid = true,
-                                      .window = window,
-                                      .window_width = config.window_width,
-                                      .window_height = config.window_height};
+  const auto context =
+      new GraphicContext{.valid = true,
+                         .window = window,
+                         .virtual_width = config.virtual_width,
+                         .virtual_height = config.virtual_height};
   g_graphic_context = context;
-  return g_graphic_context;
+  glfwSetWindowUserPointer(window, context);
+  return *g_graphic_context;
 }
 
 auto graphic_context_destroy(GraphicContext *graphic_context) -> void {
@@ -105,4 +105,5 @@ auto graphic_context_destroy(GraphicContext *graphic_context) -> void {
   glfwDestroyWindow(graphic_context->window);
   glfwTerminate();
   graphic_context->valid = false;
+  delete g_graphic_context;
 }

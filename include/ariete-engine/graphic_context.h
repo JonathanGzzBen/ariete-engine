@@ -21,22 +21,17 @@ using GraphicContextConfig = struct GraphicContextConfig {
                             const GLchar *message, const void *userParam);
   bool gl_enable_debug;
   const char *window_title;
-  int window_width;
-  int window_height;
-};
-
-using WindowState = struct WindowState {
-  int width;
-  int height;
-  const float virtual_width;
-  const float virtual_height;
+  int initial_window_width;
+  int initial_window_height;
+  float virtual_width;
+  float virtual_height;
 };
 
 using GraphicContext = struct GraphicContext {
   bool valid;
   GLFWwindow *window;
-  int window_width;
-  int window_height;
+  const float virtual_width;
+  const float virtual_height;
 };
 
 // This function should only be called once per program

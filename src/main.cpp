@@ -75,10 +75,11 @@ auto main() -> int {
       .glfw_window_hints_count = 5,
       .gl_debug_callback = gl_debug_callback,
       .gl_enable_debug = true,
-      .window_title = "Jonark",
-      .window_width = window_width,
-      .window_height = window_height,
-  };
+      .window_title = "ariete-engine",
+      .initial_window_width = window_width,
+      .initial_window_height = window_height,
+      .virtual_width = window_width,
+      .virtual_height = window_height};
   const auto graphic_context =
       std::unique_ptr<GraphicContext, decltype(&graphic_context_destroy)>(
           new GraphicContext(graphic_context_create(config)),
@@ -110,13 +111,6 @@ auto main() -> int {
     std::println(std::cerr, "Could not create Program");
     return 1;
   }
-
-  auto window_state = WindowState{.width = graphic_context->window_width,
-                                  .height = graphic_context->window_height,
-                                  .virtual_width = window_width,
-                                  .virtual_height = window_height};
-
-  glfwSetWindowUserPointer(graphic_context->window, &window_state);
 
   const auto vao_manager = get_smart_manager<VertexArrayObjectManager>(
       vertex_array_object_manager_create, 1,
@@ -193,11 +187,6 @@ auto main() -> int {
   // Set up permanent uniforms
   program_use(*program_manager, program_handle);
 
-  // const auto projection_view_matrix = glm::ortho(
-  //     0.0F, window_state->virtual_width, 0.0F, window_state->virtual_height);
-  // program_set_uniform(*window_state->program_manager,
-  //                     window_state->shader_program_handle,
-  //                     "projection_view_matrix", projection_view_matrix);
   const auto projection_view_matrix =
       glm::ortho(0.0F, static_cast<float>(window_width), 0.0F,
                  static_cast<float>(window_height));
