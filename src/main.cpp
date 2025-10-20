@@ -113,8 +113,8 @@ auto main() -> int {
 
   auto window_state = WindowState{.width = graphic_context->window_width,
                                   .height = graphic_context->window_height,
-                                  .program_manager = program_manager.get(),
-                                  .shader_program_handle = program_handle};
+                                  .virtual_width = window_width,
+                                  .virtual_height = window_height};
 
   glfwSetWindowUserPointer(graphic_context->window, &window_state);
 
@@ -192,8 +192,15 @@ auto main() -> int {
 
   // Set up permanent uniforms
   program_use(*program_manager, program_handle);
+
+  // const auto projection_view_matrix = glm::ortho(
+  //     0.0F, window_state->virtual_width, 0.0F, window_state->virtual_height);
+  // program_set_uniform(*window_state->program_manager,
+  //                     window_state->shader_program_handle,
+  //                     "projection_view_matrix", projection_view_matrix);
   const auto projection_view_matrix =
-      glm::ortho(0.0F, 1280.0F, 0.0F, static_cast<float>(window_height));
+      glm::ortho(0.0F, static_cast<float>(window_width), 0.0F,
+                 static_cast<float>(window_height));
   program_set_uniform(*program_manager, program_handle,
                       "projection_view_matrix", projection_view_matrix);
   static constexpr int font_atlas_texture_unit = 0;
@@ -216,9 +223,7 @@ auto main() -> int {
     program_use(*program_manager, program_handle);
 
     auto model_matrix = glm::mat4(1.0F);
-    model_matrix = glm::translate(
-        model_matrix,
-        glm::vec3(0.0F, static_cast<float>(window_state.height) / 2.0F, 0.0F));
+    model_matrix = glm::translate(model_matrix, glm::vec3(0.0F, 350.0F, 0.0F));
     program_set_uniform(*program_manager, program_handle, "model_matrix",
                         model_matrix);
     vertex_array_object_bind(*vao_manager, vao_handle);

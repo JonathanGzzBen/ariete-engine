@@ -6,20 +6,29 @@
 
 static GraphicContext g_graphic_context = {.valid = false};
 
-void window_size_callback(GLFWwindow *window, const int width,
-                          const int height) {
+void window_size_callback(GLFWwindow *window, const int new_width,
+                          const int new_height) {
   const auto window_state =
       static_cast<WindowState *>(glfwGetWindowUserPointer(window));
-  window_state->width = width;
-  window_state->height = height;
-  glfwSetWindowSize(window, width, height);
-  glViewport(0, 0, width, height);
+  window_state->width = new_width;
+  window_state->height = new_height;
 
-  const auto projection_view_matrix =
-      glm::ortho(0.0F, 1280.0F, 0.0F, static_cast<float>(height));
-  program_set_uniform(*window_state->program_manager,
-                      window_state->shader_program_handle,
-                      "projection_view_matrix", projection_view_matrix);
+  const float target_aspect_ratio =
+      window_state->virtual_width / window_state->virtual_height;
+
+  int viewport_width = new_width;
+  int viewport_height =
+      static_cast<int>(new_width / target_aspect_ratio + 0.5F);
+  if (viewport_height > new_height) {
+    // Window is too wide - pillarbox
+    viewport_height = new_height;
+    viewport_width = viewport_height * target_aspect_ratio + 0.5F;
+  }
+
+  const int viewport_x = (new_width / 2) - (viewport_width / 2);
+  const int viewport_y = (new_height / 2) - (viewport_height / 2);
+
+  glViewport(viewport_x, viewport_y, viewport_width, viewport_height);
 }
 
 // This function should only be called once per program

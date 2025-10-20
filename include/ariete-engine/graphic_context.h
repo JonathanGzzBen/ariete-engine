@@ -28,8 +28,8 @@ using GraphicContextConfig = struct GraphicContextConfig {
 using WindowState = struct WindowState {
   int width;
   int height;
-  ProgramManager *program_manager;
-  ProgramHandle shader_program_handle;
+  const float virtual_width;
+  const float virtual_height;
 };
 
 using GraphicContext = struct GraphicContext {
