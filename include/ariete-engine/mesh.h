@@ -34,6 +34,8 @@ auto mesh_manager_create(int max_num_meshes) -> MeshManager;
 
 auto mesh_manager_destroy_all(MeshManager *manager) -> void;
 
+auto mesh_manager_reset(MeshManager *manager) -> void;
+
 auto mesh_validate_handle(const MeshManager &manager, MeshHandle handle)
     -> bool;
 

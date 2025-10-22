@@ -4,7 +4,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "program.h"
+#include "script_reader.h"
 
 using WindowHint = struct WindowHint {
   int key;
@@ -32,6 +32,7 @@ using GraphicContext = struct GraphicContext {
   GLFWwindow *window;
   const float virtual_width;
   const float virtual_height;
+  ScriptReader* script_reader;
 };
 
 // This function should only be called once per program

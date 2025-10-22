@@ -40,6 +40,18 @@ auto mesh_manager_destroy_all(MeshManager *manager) -> void {
   manager->valid = false;
 }
 
+auto mesh_manager_reset(MeshManager *manager) -> void {
+  if (!manager->valid) {
+    std::println(std::cerr, "Mesh manager not valid");
+    return;
+  }
+  for (int i = 0; i < manager->meshes_count; ++i) {
+    glDeleteBuffers(1, &manager->vbos[i]);
+    glDeleteBuffers(1, &manager->ebos[i]);
+  }
+  manager->meshes_count = 0;
+}
+
 auto mesh_validate_handle(const MeshManager &manager, const MeshHandle handle)
     -> bool {
   if (!manager.valid) {

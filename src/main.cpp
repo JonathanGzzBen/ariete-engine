@@ -13,6 +13,7 @@
 #include "ariete-engine/graphic_context.h"
 #include "ariete-engine/mesh.h"
 #include "ariete-engine/program.h"
+#include "ariete-engine/script_reader.h"
 #include "ariete-engine/text.h"
 #include "ariete-engine/texture.h"
 #include "ariete-engine/vertex_array_object.h"
@@ -175,14 +176,17 @@ auto main() -> int {
     std::println(std::cerr, "Font data not valid");
     return 1;
   }
-  const auto text_mesh_handle = text_create_mesh(
-      glyph_data, mesh_manager.get(),
-      "Hello this is a longer test text for testing the text rendering.", 0.5F,
-      scale);
-  if (text_mesh_handle < 0) {
-    std::println(stderr, "Could not create text_mesh");
+
+  // Set up script reader
+  auto script_reader = script_reader_create("script_text.txt");
+  if (!script_reader.valid) {
     return 1;
   }
+  glfwGetWindowUserPointer(graphic_context->window);
+  auto graphic_context_user_pointer = static_cast<GraphicContext *>(
+      glfwGetWindowUserPointer(graphic_context->window));
+  graphic_context_user_pointer->script_reader = &script_reader;
+  script_reader_get_next_line(&script_reader);
 
   // Set up permanent uniforms
   program_use(*program_manager, program_handle);
@@ -200,6 +204,20 @@ auto main() -> int {
                font_atlas_texture_unit);
   glUseProgram(0);
 
+  // Input
+  glfwSetInputMode(graphic_context->window, GLFW_STICKY_KEYS, GLFW_TRUE);
+  auto key_callback = [](GLFWwindow *window, int key, int scancode, int action,
+                         int mods) {
+    if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
+      auto graphic_context =
+          static_cast<GraphicContext *>(glfwGetWindowUserPointer(window));
+      if (!script_reader_eof(*graphic_context->script_reader)) {
+        script_reader_get_next_line(graphic_context->script_reader);
+      }
+    }
+  };
+  glfwSetKeyCallback(graphic_context->window, key_callback);
+
   glEnable(GL_DEPTH_TEST);
   /* Enable alpha blend for font */
   glEnable(GL_BLEND);
@@ -216,7 +234,22 @@ auto main() -> int {
     program_set_uniform(*program_manager, program_handle, "model_matrix",
                         model_matrix);
     vertex_array_object_bind(*vao_manager, vao_handle);
-    mesh_draw(*mesh_manager, text_mesh_handle);
+
+    if (script_reader_eof(script_reader)) {
+      script_reader_reset(&script_reader);
+    }
+
+    if (const auto line = script_reader_get_current_line(&script_reader);
+        !line.empty()) {
+      const auto text_mesh_handle =
+          text_create_mesh(glyph_data, mesh_manager.get(), line, 0.5F, scale);
+      if (text_mesh_handle < 0) {
+        std::println(stderr, "Could not create text_mesh");
+        return 1;
+      }
+      mesh_draw(*mesh_manager, text_mesh_handle);
+    }
+    mesh_manager_reset(mesh_manager.get());
 
     glfwSwapBuffers(graphic_context->window);
     glfwPollEvents();
