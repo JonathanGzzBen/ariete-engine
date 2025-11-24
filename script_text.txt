@@ -1,0 +1,4 @@
+Hola este es un ejemplo de un script
+Tiene varias lineas con texto
+
+Y una linea vacia

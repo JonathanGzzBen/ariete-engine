@@ -94,7 +94,6 @@ auto graphic_context_create(const GraphicContextConfig &config)
                          .virtual_width = config.virtual_width,
                          .virtual_height = config.virtual_height};
   g_graphic_context = context;
-  glfwSetWindowUserPointer(window, context);
   return *g_graphic_context;
 }
 

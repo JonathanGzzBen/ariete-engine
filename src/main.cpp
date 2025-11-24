@@ -9,6 +9,7 @@
 #include <iostream>
 #include <print>
 
+#include "ariete-engine/engine_state.h"
 #include "ariete-engine/font.h"
 #include "ariete-engine/graphic_context.h"
 #include "ariete-engine/mesh.h"
@@ -178,15 +179,11 @@ auto main() -> int {
   }
 
   // Set up script reader
-  auto script_reader = script_reader_create("script_text.txt");
-  if (!script_reader.valid) {
-    return 1;
-  }
-  glfwGetWindowUserPointer(graphic_context->window);
-  auto graphic_context_user_pointer = static_cast<GraphicContext *>(
+  EngineState engine_state = engine_state_create("script_text.txt");
+  glfwSetWindowUserPointer(graphic_context->window, &engine_state);
+  auto state = static_cast<EngineState *>(
       glfwGetWindowUserPointer(graphic_context->window));
-  graphic_context_user_pointer->script_reader = &script_reader;
-  script_reader_get_next_line(&script_reader);
+  script_reader_get_next_line(&state->script_reader);
 
   // Set up permanent uniforms
   program_use(*program_manager, program_handle);
@@ -209,10 +206,10 @@ auto main() -> int {
   auto key_callback = [](GLFWwindow *window, int key, int scancode, int action,
                          int mods) {
     if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
-      auto graphic_context =
-          static_cast<GraphicContext *>(glfwGetWindowUserPointer(window));
-      if (!script_reader_eof(*graphic_context->script_reader)) {
-        script_reader_get_next_line(graphic_context->script_reader);
+      auto *state =
+          static_cast<EngineState *>(glfwGetWindowUserPointer(window));
+      if (!script_reader_eof(state->script_reader)) {
+        script_reader_get_next_line(&state->script_reader);
       }
     }
   };
@@ -235,11 +232,11 @@ auto main() -> int {
                         model_matrix);
     vertex_array_object_bind(*vao_manager, vao_handle);
 
-    if (script_reader_eof(script_reader)) {
-      script_reader_reset(&script_reader);
+    if (script_reader_eof(state->script_reader)) {
+      script_reader_reset(&state->script_reader);
     }
 
-    if (const auto line = script_reader_get_current_line(&script_reader);
+    if (const auto line = script_reader_get_current_line(&state->script_reader);
         !line.empty()) {
       const auto text_mesh_handle =
           text_create_mesh(glyph_data, mesh_manager.get(), line, 0.5F, scale);
